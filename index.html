@@ -600,50 +600,33 @@
       payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
-	    {
-      title: "Ryder",
-      description: "Buy The Owner Of This Website",
-      image: "https://images.unsplash.com/photo-1625064122145-4ce5c06e9f4e?fit=crop&w=800&q=60",
-      category: "fortnite",
-      price: 15,
-      stock: 1,
-      payments: ["PayPal", "Cashapp"],
-      arrivalTime: "Within 10 minutes after purchase"
-    },
   ];
 
-  // Store reviews in memory (in a real app, you'd fetch from a server)
-  let reviews = [];
+  // Store reviews in localStorage
+  function getReviews() {
+    const reviewsJSON = localStorage.getItem('ryryGameVaultReviews');
+    return reviewsJSON ? JSON.parse(reviewsJSON) : [];
+  }
+  
+  function saveReviews(reviews) {
+    localStorage.setItem('ryryGameVaultReviews', JSON.stringify(reviews));
+  }
   
   const container = document.getElementById("accountContainer");
   const reviewsContainer = document.getElementById("reviewsContainer");
   let isAnimating = false;
 
   // Load reviews when page loads
-  async function loadReviews() {
+  function loadReviews() {
     try {
-      // In a real app, you would fetch reviews from your server here
-      // For now, we'll start with an empty array
-      reviews = [];
+      const reviews = getReviews();
       
       if (reviews.length === 0) {
         reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
         return;
       }
       
-      reviewsContainer.innerHTML = '';
-      reviews.forEach(review => {
-        const reviewCard = document.createElement('div');
-        reviewCard.className = 'review-card';
-        reviewCard.innerHTML = `
-          <div class="review-header">
-            <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
-            <div class="review-date">${review.date}</div>
-          </div>
-          <div class="review-message">${review.message || 'No message provided'}</div>
-        `;
-        reviewsContainer.appendChild(reviewCard);
-      });
+      displayReviews(reviews);
     } catch (error) {
       console.error("Error loading reviews:", error);
       reviewsContainer.innerHTML = '<div class="no-reviews">Could not load reviews. Please try again later.</div>';
@@ -687,7 +670,8 @@
       body: JSON.stringify(payload)
     });
     
-    // Add the new review to the public list
+    // Add the new review to localStorage
+    const reviews = getReviews();
     const newReview = {
       rating: rating,
       message: message || '',
@@ -695,10 +679,11 @@
     };
     
     reviews.push(newReview);
-    displayReviews();
+    saveReviews(reviews);
+    displayReviews(reviews);
   }
 
-  function displayReviews() {
+  function displayReviews(reviews) {
     if (reviews.length === 0) {
       reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
       return;
