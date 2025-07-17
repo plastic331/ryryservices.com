@@ -600,11 +600,11 @@
       payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
-        {
+	    {
       title: "Ryder",
-      description: "Buy the owner of this website",
+      description: "Buy The Owner Of This Website",
       image: "https://images.unsplash.com/photo-1625064122145-4ce5c06e9f4e?fit=crop&w=800&q=60",
-      category: "products",
+      category: "fortnite",
       price: 15,
       stock: 1,
       payments: ["PayPal", "Cashapp"],
@@ -623,24 +623,8 @@
   async function loadReviews() {
     try {
       // In a real app, you would fetch reviews from your server here
-      // For demo purposes, we'll use some sample reviews
-      reviews = [
-        {
-          rating: 5,
-          message: "Great service! Got my account within minutes.",
-          date: "7/15/2023"
-        },
-        {
-          rating: 4,
-          message: "Good selection of accounts, would buy again.",
-          date: "7/10/2023"
-        },
-        {
-          rating: 5,
-          message: "Fast delivery and excellent customer support!",
-          date: "7/5/2023"
-        }
-      ];
+      // For now, we'll start with an empty array
+      reviews = [];
       
       if (reviews.length === 0) {
         reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
@@ -701,6 +685,37 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
+    });
+    
+    // Add the new review to the public list
+    const newReview = {
+      rating: rating,
+      message: message || '',
+      date: new Date().toLocaleDateString()
+    };
+    
+    reviews.push(newReview);
+    displayReviews();
+  }
+
+  function displayReviews() {
+    if (reviews.length === 0) {
+      reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
+      return;
+    }
+    
+    reviewsContainer.innerHTML = '';
+    reviews.forEach(review => {
+      const reviewCard = document.createElement('div');
+      reviewCard.className = 'review-card';
+      reviewCard.innerHTML = `
+        <div class="review-header">
+          <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
+          <div class="review-date">${review.date}</div>
+        </div>
+        <div class="review-message">${review.message || 'No message provided'}</div>
+      `;
+      reviewsContainer.appendChild(reviewCard);
     });
   }
 
@@ -875,7 +890,6 @@
     setTimeout(() => {
       closeFeedbackModal();
       sendFeedbackBtn.textContent = "Send Feedback";
-      loadReviews(); // Refresh reviews to potentially show the new one
     }, 1500);
   });
 
