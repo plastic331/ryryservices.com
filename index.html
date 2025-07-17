@@ -369,6 +369,88 @@
       font-weight: bold;
       z-index: 1;
     }
+    
+    /* New styles for feedback visibility toggle */
+    .feedback-visibility {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 15px;
+      gap: 15px;
+    }
+    
+    .visibility-option {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    
+    .visibility-option input {
+      cursor: pointer;
+    }
+    
+    .visibility-option label {
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    /* Reviews section styles */
+    .reviews-section {
+      background: #1a1a1a;
+      padding: 30px;
+      border-top: 2px solid #00ffd5;
+    }
+    
+    .reviews-title {
+      text-align: center;
+      font-size: 24px;
+      color: #00ffd5;
+      margin-bottom: 20px;
+    }
+    
+    .reviews-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .review-card {
+      background: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 20px;
+    }
+    
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .review-stars {
+      color: gold;
+      font-size: 18px;
+    }
+    
+    .review-date {
+      color: #aaa;
+      font-size: 14px;
+    }
+    
+    .review-message {
+      color: #ddd;
+      line-height: 1.4;
+    }
+    
+    .no-reviews {
+      text-align: center;
+      color: #aaa;
+      grid-column: 1 / -1;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
@@ -385,6 +467,13 @@
 </div>
 
 <div class="container" id="accountContainer"></div>
+
+<div class="reviews-section" id="reviewsSection">
+  <h2 class="reviews-title">Customer Reviews</h2>
+  <div class="reviews-container" id="reviewsContainer">
+    <div class="no-reviews">No reviews yet. Be the first to leave one!</div>
+  </div>
+</div>
 
 <footer>
   <p>💬 Join the <a href="https://discord.gg/hKfAbvzPnf" target="_blank">Discord</a> to buy!</p>
@@ -416,6 +505,16 @@
         <i class="fas fa-star feedback-star" data-rating="5"></i>
       </div>
       <textarea class="feedback-textarea" id="feedbackMessage" placeholder="Your feedback message (optional)"></textarea>
+      <div class="feedback-visibility">
+        <div class="visibility-option">
+          <input type="radio" id="publicFeedback" name="feedbackVisibility" value="public" checked>
+          <label for="publicFeedback">Public</label>
+        </div>
+        <div class="visibility-option">
+          <input type="radio" id="privateFeedback" name="feedbackVisibility" value="private">
+          <label for="privateFeedback">Private</label>
+        </div>
+      </div>
       <button class="feedback-btn" id="sendFeedbackBtn" disabled>Send Feedback</button>
     </div>
   </div>
@@ -537,8 +636,34 @@
     },
   ];
 
+  // Store reviews in localStorage
+  let reviews = JSON.parse(localStorage.getItem('reviews')) || [];
+  
   const container = document.getElementById("accountContainer");
+  const reviewsContainer = document.getElementById("reviewsContainer");
   let isAnimating = false;
+
+  // Load reviews when page loads
+  function loadReviews() {
+    if (reviews.length === 0) {
+      reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
+      return;
+    }
+    
+    reviewsContainer.innerHTML = '';
+    reviews.forEach(review => {
+      const reviewCard = document.createElement('div');
+      reviewCard.className = 'review-card';
+      reviewCard.innerHTML = `
+        <div class="review-header">
+          <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
+          <div class="review-date">${review.date}</div>
+        </div>
+        <div class="review-message">${review.message || 'No message provided'}</div>
+      `;
+      reviewsContainer.appendChild(reviewCard);
+    });
+  }
 
   async function sendInterestedWebhook(account) {
     let ip = "unknown";
@@ -559,7 +684,7 @@
     });
   }
 
-  async function sendFeedbackWebhook(rating, message) {
+  async function sendFeedbackWebhook(rating, message, isPublic) {
     let ip = "unknown";
     try {
       const res = await fetch("https://api.ipify.org?format=json");
@@ -568,7 +693,7 @@
     } catch {}
 
     const payload = {
-      content: `**New Feedback**\nRating: ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}\nMessage: ${message || "No message provided"}\nVisitor IP: ${ip}\nTime: ${new Date().toLocaleString()}`
+      content: `**New Feedback**\nVisibility: ${isPublic ? 'Public' : 'Private'}\nRating: ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}\nMessage: ${message || "No message provided"}\nVisitor IP: ${ip}\nTime: ${new Date().toLocaleString()}`
     };
 
     await fetch("https://discord.com/api/webhooks/1395205022257512468/etuRFnOZOu0FgtY6cmroD7LdPFmC1pWxvgCvxdfnmDgCJznJKh82uar8MV5CgjO2lfdG", {
@@ -695,6 +820,8 @@
   const feedbackStars = document.querySelectorAll(".feedback-star");
   const feedbackMessage = document.getElementById("feedbackMessage");
   const sendFeedbackBtn = document.getElementById("sendFeedbackBtn");
+  const publicFeedback = document.getElementById("publicFeedback");
+  const privateFeedback = document.getElementById("privateFeedback");
 
   let selectedRating = 0;
 
@@ -702,6 +829,7 @@
     selectedRating = 0;
     feedbackStars.forEach(star => star.classList.remove("active"));
     feedbackMessage.value = "";
+    publicFeedback.checked = true;
     sendFeedbackBtn.disabled = true;
     feedbackModalOverlay.classList.add("active");
     feedbackModal.classList.add("active");
@@ -737,10 +865,27 @@
   sendFeedbackBtn.addEventListener("click", async () => {
     if (selectedRating === 0) return;
     
+    const isPublic = publicFeedback.checked;
+    const message = feedbackMessage.value;
+    
     sendFeedbackBtn.disabled = true;
     sendFeedbackBtn.textContent = "Sending...";
     
-    await sendFeedbackWebhook(selectedRating, feedbackMessage.value);
+    // Always send to webhook
+    await sendFeedbackWebhook(selectedRating, message, isPublic);
+    
+    // If public, also save to localStorage
+    if (isPublic) {
+      const newReview = {
+        rating: selectedRating,
+        message: message,
+        date: new Date().toLocaleDateString()
+      };
+      
+      reviews.unshift(newReview); // Add to beginning of array
+      localStorage.setItem('reviews', JSON.stringify(reviews));
+      loadReviews();
+    }
     
     sendFeedbackBtn.textContent = "Thank You!";
     setTimeout(() => {
@@ -749,7 +894,9 @@
     }, 1500);
   });
 
+  // Initialize the page
   showAccounts('all');
+  loadReviews();
 </script>
 
 </body>
