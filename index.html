@@ -157,7 +157,6 @@
       color: #00c7a8;
     }
 
-    /* Modal styles */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -293,10 +292,9 @@
 <div class="container" id="accountContainer"></div>
 
 <footer>
-  <p>💬 Join the <a href="https://discord.gg/yourserver" target="_blank">Discord</a> to buy!</p>
+  <p>💬 Join the <a href="https://discord.gg/hKfAbvzPnf" target="_blank">Discord</a> to buy!</p>
 </footer>
 
-<!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modal">
     <div class="modal-close" id="modalClose">&times;</div>
@@ -424,7 +422,6 @@
     }, 400);
   }
 
-  // Modal elements
   const modalOverlay = document.getElementById("modalOverlay");
   const modal = document.getElementById("modal");
   const modalTitle = document.getElementById("modalTitle");
@@ -450,7 +447,7 @@
       modalPayments.appendChild(span);
     });
 
-    modalInfo.innerHTML = `<strong>Estimated Arrival:</strong> ${account.arrivalTime}<br><br>Join our <a href="https://discord.gg/yourserver" target="_blank" style="color:#00ffd5; text-decoration: underline;">Discord</a> to complete your purchase.`;
+    modalInfo.innerHTML = `<strong>Estimated Arrival:</strong> ${account.arrivalTime}<br><br>Join our <a href="https://discord.gg/hKfAbvzPnf" target="_blank" style="color:#00ffd5; text-decoration: underline;">Discord</a> to complete your purchase.`;
 
     modalOverlay.classList.add("active");
     modal.classList.add("active");
@@ -467,7 +464,7 @@
   });
 
   continueBtn.addEventListener("click", () => {
-    window.open("https://discord.gg/yourserver", "_blank");
+    window.open("https://discord.gg/hKfAbvzPnf", "_blank");
   });
 
   showAccounts('all');
