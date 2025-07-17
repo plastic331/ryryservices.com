@@ -613,8 +613,8 @@
   ];
 
   // Store reviews in memory (in a real app, you'd fetch from a server)
-let reviews = JSON.parse(localStorage.getItem('globalReviews')) || [];
-	
+  let reviews = [];
+  
   const container = document.getElementById("accountContainer");
   const reviewsContainer = document.getElementById("reviewsContainer");
   let isAnimating = false;
@@ -669,34 +669,23 @@ let reviews = JSON.parse(localStorage.getItem('globalReviews')) || [];
     });
   }
 
-async function sendFeedbackWebhook(rating, message) {
-  let ip = "unknown";
-  try {
-    const res = await fetch("https://api.ipify.org?format=json");
-    const data = await res.json();
-    ip = data.ip || "unknown";
-  } catch {}
+  async function sendFeedbackWebhook(rating, message) {
+    let ip = "unknown";
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      ip = data.ip || "unknown";
+    } catch {}
 
-  const newReview = {
-    rating: rating,
-    message: message || '',
-    date: new Date().toLocaleDateString()
-  };
+    const payload = {
+      content: `**New Feedback**\nRating: ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}\nMessage: ${message || "No message provided"}\nVisitor IP: ${ip}\nTime: ${new Date().toLocaleString()}`
+    };
 
-  reviews.push(newReview);
-  localStorage.setItem('globalReviews', JSON.stringify(reviews));
-  displayReviews();
-
-  const payload = {
-    content: `**New Feedback**\nRating: ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}\nMessage: ${message || "No message provided"}\nVisitor IP: ${ip}\nTime: ${new Date().toLocaleString()}`
-  };
-
-  await fetch("https://discord.com/api/webhooks/1395205022257512468/etuRFnOZOu0FgtY6cmroD7LdPFmC1pWxvgCvxdfnmDgCJznJKh82uar8MV5CgjO2lfdG", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-}
+    await fetch("https://discord.com/api/webhooks/1395205022257512468/etuRFnOZOu0FgtY6cmroD7LdPFmC1pWxvgCvxdfnmDgCJznJKh82uar8MV5CgjO2lfdG", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
     
     // Add the new review to the public list
     const newReview = {
