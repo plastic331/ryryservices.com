@@ -370,30 +370,6 @@
       z-index: 1;
     }
     
-    /* New styles for feedback visibility toggle */
-    .feedback-visibility {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 15px;
-      gap: 15px;
-    }
-    
-    .visibility-option {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-    }
-    
-    .visibility-option input {
-      cursor: pointer;
-    }
-    
-    .visibility-option label {
-      cursor: pointer;
-      user-select: none;
-    }
-    
     /* Reviews section styles */
     .reviews-section {
       background: #1a1a1a;
@@ -471,7 +447,7 @@
 <div class="reviews-section" id="reviewsSection">
   <h2 class="reviews-title">Customer Reviews</h2>
   <div class="reviews-container" id="reviewsContainer">
-    <div class="no-reviews">No reviews yet. Be the first to leave one!</div>
+    <div class="no-reviews">Loading reviews...</div>
   </div>
 </div>
 
@@ -505,16 +481,6 @@
         <i class="fas fa-star feedback-star" data-rating="5"></i>
       </div>
       <textarea class="feedback-textarea" id="feedbackMessage" placeholder="Your feedback message (optional)"></textarea>
-      <div class="feedback-visibility">
-        <div class="visibility-option">
-          <input type="radio" id="publicFeedback" name="feedbackVisibility" value="public" checked>
-          <label for="publicFeedback">Public</label>
-        </div>
-        <div class="visibility-option">
-          <input type="radio" id="privateFeedback" name="feedbackVisibility" value="private">
-          <label for="privateFeedback">Private</label>
-        </div>
-      </div>
       <button class="feedback-btn" id="sendFeedbackBtn" disabled>Send Feedback</button>
     </div>
   </div>
@@ -636,33 +602,58 @@
     },
   ];
 
-  // Store reviews in localStorage
-  let reviews = JSON.parse(localStorage.getItem('reviews')) || [];
+  // Store reviews in memory (in a real app, you'd fetch from a server)
+  let reviews = [];
   
   const container = document.getElementById("accountContainer");
   const reviewsContainer = document.getElementById("reviewsContainer");
   let isAnimating = false;
 
   // Load reviews when page loads
-  function loadReviews() {
-    if (reviews.length === 0) {
-      reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
-      return;
+  async function loadReviews() {
+    try {
+      // In a real app, you would fetch reviews from your server here
+      // For demo purposes, we'll use some sample reviews
+      reviews = [
+        {
+          rating: 5,
+          message: "Great service! Got my account within minutes.",
+          date: "7/15/2023"
+        },
+        {
+          rating: 4,
+          message: "Good selection of accounts, would buy again.",
+          date: "7/10/2023"
+        },
+        {
+          rating: 5,
+          message: "Fast delivery and excellent customer support!",
+          date: "7/5/2023"
+        }
+      ];
+      
+      if (reviews.length === 0) {
+        reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
+        return;
+      }
+      
+      reviewsContainer.innerHTML = '';
+      reviews.forEach(review => {
+        const reviewCard = document.createElement('div');
+        reviewCard.className = 'review-card';
+        reviewCard.innerHTML = `
+          <div class="review-header">
+            <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
+            <div class="review-date">${review.date}</div>
+          </div>
+          <div class="review-message">${review.message || 'No message provided'}</div>
+        `;
+        reviewsContainer.appendChild(reviewCard);
+      });
+    } catch (error) {
+      console.error("Error loading reviews:", error);
+      reviewsContainer.innerHTML = '<div class="no-reviews">Could not load reviews. Please try again later.</div>';
     }
-    
-    reviewsContainer.innerHTML = '';
-    reviews.forEach(review => {
-      const reviewCard = document.createElement('div');
-      reviewCard.className = 'review-card';
-      reviewCard.innerHTML = `
-        <div class="review-header">
-          <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
-          <div class="review-date">${review.date}</div>
-        </div>
-        <div class="review-message">${review.message || 'No message provided'}</div>
-      `;
-      reviewsContainer.appendChild(reviewCard);
-    });
   }
 
   async function sendInterestedWebhook(account) {
@@ -684,7 +675,7 @@
     });
   }
 
-  async function sendFeedbackWebhook(rating, message, isPublic) {
+  async function sendFeedbackWebhook(rating, message) {
     let ip = "unknown";
     try {
       const res = await fetch("https://api.ipify.org?format=json");
@@ -693,7 +684,7 @@
     } catch {}
 
     const payload = {
-      content: `**New Feedback**\nVisibility: ${isPublic ? 'Public' : 'Private'}\nRating: ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}\nMessage: ${message || "No message provided"}\nVisitor IP: ${ip}\nTime: ${new Date().toLocaleString()}`
+      content: `**New Feedback**\nRating: ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}\nMessage: ${message || "No message provided"}\nVisitor IP: ${ip}\nTime: ${new Date().toLocaleString()}`
     };
 
     await fetch("https://discord.com/api/webhooks/1395205022257512468/etuRFnOZOu0FgtY6cmroD7LdPFmC1pWxvgCvxdfnmDgCJznJKh82uar8MV5CgjO2lfdG", {
@@ -820,8 +811,6 @@
   const feedbackStars = document.querySelectorAll(".feedback-star");
   const feedbackMessage = document.getElementById("feedbackMessage");
   const sendFeedbackBtn = document.getElementById("sendFeedbackBtn");
-  const publicFeedback = document.getElementById("publicFeedback");
-  const privateFeedback = document.getElementById("privateFeedback");
 
   let selectedRating = 0;
 
@@ -829,7 +818,6 @@
     selectedRating = 0;
     feedbackStars.forEach(star => star.classList.remove("active"));
     feedbackMessage.value = "";
-    publicFeedback.checked = true;
     sendFeedbackBtn.disabled = true;
     feedbackModalOverlay.classList.add("active");
     feedbackModal.classList.add("active");
@@ -865,32 +853,21 @@
   sendFeedbackBtn.addEventListener("click", async () => {
     if (selectedRating === 0) return;
     
-    const isPublic = publicFeedback.checked;
     const message = feedbackMessage.value;
     
     sendFeedbackBtn.disabled = true;
     sendFeedbackBtn.textContent = "Sending...";
     
-    // Always send to webhook
-    await sendFeedbackWebhook(selectedRating, message, isPublic);
+    // Send to webhook
+    await sendFeedbackWebhook(selectedRating, message);
     
-    // If public, also save to localStorage
-    if (isPublic) {
-      const newReview = {
-        rating: selectedRating,
-        message: message,
-        date: new Date().toLocaleDateString()
-      };
-      
-      reviews.unshift(newReview); // Add to beginning of array
-      localStorage.setItem('reviews', JSON.stringify(reviews));
-      loadReviews();
-    }
-    
+    // In a real app, you would also save to your database here
+    // For now, we'll just reload the reviews to show the new one
     sendFeedbackBtn.textContent = "Thank You!";
     setTimeout(() => {
       closeFeedbackModal();
       sendFeedbackBtn.textContent = "Send Feedback";
+      loadReviews(); // Refresh reviews to potentially show the new one
     }, 1500);
   });
 
