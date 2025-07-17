@@ -6,6 +6,8 @@
   <title>RYRY Game Vault</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
   <style>
     * {
       margin: 0;
@@ -370,7 +372,6 @@
       z-index: 1;
     }
     
-    /* Reviews section styles */
     .reviews-section {
       background: #1a1a1a;
       padding: 30px;
@@ -487,6 +488,19 @@
 </div>
 
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAaOPQtYb9m6zVVUeeM2MCqjYboGafHLO4",
+    authDomain: "ryry-backend.firebaseapp.com",
+    databaseURL: "https://ryry-backend-default-rtdb.firebaseio.com",
+    projectId: "ryry-backend",
+    storageBucket: "ryry-backend.firebasestorage.app",
+    messagingSenderId: "1097448245068",
+    appId: "1:1097448245068:web:0486f43fa7b4733bce71e9"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
   const accounts = [
     {
       title: "Korblox",
@@ -600,7 +614,7 @@
       payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
-	    {
+    {
       title: "Ryder",
       description: "Buy The Owner Of This Website",
       image: "https://images.unsplash.com/photo-1625064122145-4ce5c06e9f4e?fit=crop&w=800&q=60",
@@ -612,42 +626,48 @@
     },
   ];
 
-  // Store reviews in memory (in a real app, you'd fetch from a server)
-  let reviews = [];
-  
   const container = document.getElementById("accountContainer");
   const reviewsContainer = document.getElementById("reviewsContainer");
   let isAnimating = false;
 
-  // Load reviews when page loads
   async function loadReviews() {
     try {
-      // In a real app, you would fetch reviews from your server here
-      // For now, we'll start with an empty array
-      reviews = [];
-      
-      if (reviews.length === 0) {
-        reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
-        return;
-      }
-      
-      reviewsContainer.innerHTML = '';
-      reviews.forEach(review => {
-        const reviewCard = document.createElement('div');
-        reviewCard.className = 'review-card';
-        reviewCard.innerHTML = `
-          <div class="review-header">
-            <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
-            <div class="review-date">${review.date}</div>
-          </div>
-          <div class="review-message">${review.message || 'No message provided'}</div>
-        `;
-        reviewsContainer.appendChild(reviewCard);
+      const reviewsRef = database.ref('reviews');
+      reviewsRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+          reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
+          return;
+        }
+        
+        const reviews = Object.values(data).reverse();
+        displayReviews(reviews);
       });
     } catch (error) {
       console.error("Error loading reviews:", error);
       reviewsContainer.innerHTML = '<div class="no-reviews">Could not load reviews. Please try again later.</div>';
     }
+  }
+
+  function displayReviews(reviews) {
+    if (!reviews || reviews.length === 0) {
+      reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
+      return;
+    }
+    
+    reviewsContainer.innerHTML = '';
+    reviews.forEach(review => {
+      const reviewCard = document.createElement('div');
+      reviewCard.className = 'review-card';
+      reviewCard.innerHTML = `
+        <div class="review-header">
+          <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
+          <div class="review-date">${review.date || new Date().toLocaleDateString()}</div>
+        </div>
+        <div class="review-message">${review.message || 'No message provided'}</div>
+      `;
+      reviewsContainer.appendChild(reviewCard);
+    });
   }
 
   async function sendInterestedWebhook(account) {
@@ -685,37 +705,6 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
-    });
-    
-    // Add the new review to the public list
-    const newReview = {
-      rating: rating,
-      message: message || '',
-      date: new Date().toLocaleDateString()
-    };
-    
-    reviews.push(newReview);
-    displayReviews();
-  }
-
-  function displayReviews() {
-    if (reviews.length === 0) {
-      reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to leave one!</div>';
-      return;
-    }
-    
-    reviewsContainer.innerHTML = '';
-    reviews.forEach(review => {
-      const reviewCard = document.createElement('div');
-      reviewCard.className = 'review-card';
-      reviewCard.innerHTML = `
-        <div class="review-header">
-          <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
-          <div class="review-date">${review.date}</div>
-        </div>
-        <div class="review-message">${review.message || 'No message provided'}</div>
-      `;
-      reviewsContainer.appendChild(reviewCard);
     });
   }
 
@@ -883,17 +872,32 @@
     sendFeedbackBtn.disabled = true;
     sendFeedbackBtn.textContent = "Sending...";
     
-    // Send to webhook
     await sendFeedbackWebhook(selectedRating, message);
     
-    sendFeedbackBtn.textContent = "Thank You!";
-    setTimeout(() => {
-      closeFeedbackModal();
-      sendFeedbackBtn.textContent = "Send Feedback";
-    }, 1500);
+    const newReview = {
+      rating: selectedRating,
+      message: message || '',
+      date: new Date().toLocaleDateString(),
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    try {
+      await database.ref('reviews').push(newReview);
+      sendFeedbackBtn.textContent = "Thank You!";
+      setTimeout(() => {
+        closeFeedbackModal();
+        sendFeedbackBtn.textContent = "Send Feedback";
+      }, 1500);
+    } catch (error) {
+      console.error("Error saving review:", error);
+      sendFeedbackBtn.textContent = "Error - Try Again";
+      setTimeout(() => {
+        sendFeedbackBtn.textContent = "Send Feedback";
+        sendFeedbackBtn.disabled = false;
+      }, 1500);
+    }
   });
 
-  // Initialize the page
   showAccounts('all');
   loadReviews();
 </script>
