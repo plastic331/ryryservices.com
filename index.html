@@ -878,7 +878,7 @@
       rating: selectedRating,
       message: message || '',
       date: new Date().toLocaleDateString(),
-      timestamp: firebase.database.ServerValue.TIMESTAMP
+      timestamp: Date.now()
     };
     
     try {
