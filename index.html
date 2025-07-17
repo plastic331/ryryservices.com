@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RYRY Game Vault</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     * {
       margin: 0;
@@ -79,6 +80,7 @@
       transition: 0.3s;
       display: flex;
       flex-direction: column;
+      position: relative;
     }
 
     .product:hover {
@@ -296,6 +298,77 @@
     .continue-btn:hover {
       background: #00c7a8;
     }
+
+    .feedback-stars {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      gap: 10px;
+    }
+
+    .feedback-star {
+      font-size: 30px;
+      color: #444;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .feedback-star.active {
+      color: gold;
+    }
+
+    .feedback-textarea {
+      width: 100%;
+      background: #2a2a2a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 15px;
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: #00ffd5;
+    }
+
+    .feedback-btn {
+      background: #00ffd5;
+      color: #000;
+      font-weight: bold;
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+
+    .feedback-btn:hover {
+      background: #00c7a8;
+    }
+
+    .feedback-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .new-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff5722;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
@@ -304,9 +377,11 @@
 
 <div class="buttons">
   <button onclick="showAccounts('all')">All Accounts</button>
+  <button onclick="showAccounts('new')">New</button>
   <button onclick="showAccounts('roblox')">Roblox Accounts</button>
   <button onclick="showAccounts('fortnite')">Fortnite Accounts</button>
   <button onclick="showAccounts('products')">Products</button>
+  <button onclick="openFeedbackModal()">Leave Feedback</button>
 </div>
 
 <div class="container" id="accountContainer"></div>
@@ -327,6 +402,25 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="feedbackModalOverlay">
+  <div class="modal" id="feedbackModal">
+    <div class="modal-close" id="feedbackModalClose">&times;</div>
+    <div class="modal-header">Leave Feedback</div>
+    <div class="modal-content">
+      <p>How would you rate your experience with RYRY Game Vault?</p>
+      <div class="feedback-stars">
+        <i class="fas fa-star feedback-star" data-rating="1"></i>
+        <i class="fas fa-star feedback-star" data-rating="2"></i>
+        <i class="fas fa-star feedback-star" data-rating="3"></i>
+        <i class="fas fa-star feedback-star" data-rating="4"></i>
+        <i class="fas fa-star feedback-star" data-rating="5"></i>
+      </div>
+      <textarea class="feedback-textarea" id="feedbackMessage" placeholder="Your feedback message (optional)"></textarea>
+      <button class="feedback-btn" id="sendFeedbackBtn" disabled>Send Feedback</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const accounts = [
     {
@@ -337,7 +431,8 @@
       price: 100,
       stock: 1,
       payments: ["PayPal", "Cashapp"],
-      arrivalTime: "Within 10 minutes after purchase"
+      arrivalTime: "Within 10 minutes after purchase",
+      isNew: true
     },
     {
       title: "1k Robux",
@@ -357,7 +452,8 @@
       price: 119.99,
       stock: 1,
       payments: ["PayPal", "Crypto"],
-      arrivalTime: "Instant delivery upon payment"
+      arrivalTime: "Instant delivery upon payment",
+      isNew: true
     },
     {
       title: "Season 3 Fortnite Account",
@@ -419,7 +515,7 @@
       payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
-        {
+    {
       title: "Take The L Fortnite Account",
       description: "Get A Fortnite Account with Take The L",
       image: "https://images.unsplash.com/photo-1625064122145-4ce5c06e9f4e?fit=crop&w=800&q=60",
@@ -429,7 +525,7 @@
       payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
-            {
+    {
       title: "Random Account",
       description: "Get A Random Fortnite Account",
       image: "https://images.unsplash.com/photo-1625064122145-4ce5c06e9f4e?fit=crop&w=800&q=60",
@@ -463,6 +559,25 @@
     });
   }
 
+  async function sendFeedbackWebhook(rating, message) {
+    let ip = "unknown";
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      ip = data.ip || "unknown";
+    } catch {}
+
+    const payload = {
+      content: `**New Feedback**\nRating: ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}\nMessage: ${message || "No message provided"}\nVisitor IP: ${ip}\nTime: ${new Date().toLocaleString()}`
+    };
+
+    await fetch("https://discord.com/api/webhooks/1395205022257512468/etuRFnOZOu0FgtY6cmroD7LdPFmC1pWxvgCvxdfnmDgCJznJKh82uar8MV5CgjO2lfdG", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+
   function showAccounts(category) {
     if (isAnimating) return;
     isAnimating = true;
@@ -471,11 +586,21 @@
 
     setTimeout(() => {
       container.innerHTML = "";
-      const filtered = category === "all" ? accounts : accounts.filter(a => a.category === category);
+      let filtered;
+      
+      if (category === "all") {
+        filtered = accounts;
+      } else if (category === "new") {
+        filtered = accounts.filter(a => a.isNew);
+      } else {
+        filtered = accounts.filter(a => a.category === category);
+      }
+      
       filtered.forEach(account => {
         const box = document.createElement("div");
         box.className = "product";
         box.innerHTML = `
+          ${account.isNew ? '<div class="new-badge">NEW</div>' : ''}
           <img src="${account.image}" alt="${account.title}">
           <div class="product-details">
             <h3>${account.title}</h3>
@@ -562,6 +687,66 @@
 
   continueBtn.addEventListener("click", () => {
     window.open("https://discord.gg/hKfAbvzPnf", "_blank");
+  });
+
+  const feedbackModalOverlay = document.getElementById("feedbackModalOverlay");
+  const feedbackModal = document.getElementById("feedbackModal");
+  const feedbackModalClose = document.getElementById("feedbackModalClose");
+  const feedbackStars = document.querySelectorAll(".feedback-star");
+  const feedbackMessage = document.getElementById("feedbackMessage");
+  const sendFeedbackBtn = document.getElementById("sendFeedbackBtn");
+
+  let selectedRating = 0;
+
+  function openFeedbackModal() {
+    selectedRating = 0;
+    feedbackStars.forEach(star => star.classList.remove("active"));
+    feedbackMessage.value = "";
+    sendFeedbackBtn.disabled = true;
+    feedbackModalOverlay.classList.add("active");
+    feedbackModal.classList.add("active");
+  }
+
+  function closeFeedbackModal() {
+    feedbackModal.classList.remove("active");
+    feedbackModalOverlay.classList.remove("active");
+  }
+
+  feedbackModalClose.addEventListener("click", closeFeedbackModal);
+  feedbackModalOverlay.addEventListener("click", (e) => {
+    if(e.target === feedbackModalOverlay) closeFeedbackModal();
+  });
+
+  feedbackStars.forEach(star => {
+    star.addEventListener("click", () => {
+      const rating = parseInt(star.getAttribute("data-rating"));
+      selectedRating = rating;
+      
+      feedbackStars.forEach((s, index) => {
+        if (index < rating) {
+          s.classList.add("active");
+        } else {
+          s.classList.remove("active");
+        }
+      });
+      
+      sendFeedbackBtn.disabled = false;
+    });
+  });
+
+  sendFeedbackBtn.addEventListener("click", async () => {
+    if (selectedRating === 0) return;
+    
+    sendFeedbackBtn.disabled = true;
+    sendFeedbackBtn.textContent = "Sending...";
+    
+    await sendFeedbackWebhook(selectedRating, feedbackMessage.value);
+    
+    sendFeedbackBtn.textContent = "Thank You!";
+    setTimeout(() => {
+      closeFeedbackModal();
+      sendFeedbackBtn.textContent = "Send Feedback";
+    }, 1500);
   });
 
   showAccounts('all');
