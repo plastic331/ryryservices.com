@@ -600,6 +600,16 @@
       payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
+        {
+      title: "Ryder",
+      description: "Buy the owner of this website",
+      image: "https://images.unsplash.com/photo-1625064122145-4ce5c06e9f4e?fit=crop&w=800&q=60",
+      category: "fortnite",
+      price: 15,
+      stock: 1,
+      payments: ["PayPal", "Cashapp"],
+      arrivalTime: "Within 10 minutes after purchase"
+    },
   ];
 
   // Store reviews in memory (in a real app, you'd fetch from a server)
@@ -858,11 +868,9 @@
     sendFeedbackBtn.disabled = true;
     sendFeedbackBtn.textContent = "Sending...";
     
-    // Send to webhook
     await sendFeedbackWebhook(selectedRating, message);
     
-    // In a real app, you would also save to your database here
-    // For now, we'll just reload the reviews to show the new one
+ 
     sendFeedbackBtn.textContent = "Thank You!";
     setTimeout(() => {
       closeFeedbackModal();
