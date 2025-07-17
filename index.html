@@ -306,7 +306,7 @@
   <button onclick="showAccounts('all')">All Accounts</button>
   <button onclick="showAccounts('roblox')">Roblox Accounts</button>
   <button onclick="showAccounts('fortnite')">Fortnite Accounts</button>
-  <button onclick="showAccounts('other')">Other Accounts</button>
+  <button onclick="showAccounts('products')">Products</button>
 </div>
 
 <div class="container" id="accountContainer"></div>
@@ -330,68 +330,28 @@
 <script>
   const accounts = [
     {
-      title: "Roblox OG Account",
-      description: "2017 account with rare hats, Builders Club, and Level 45 achievements.",
-      image: "https://tr.rbxcdn.com/4c3ad54c9bdb1ea8e1f9de9921c78f85/420/420/Hat/Png",
-      category: "roblox",
-      price: 49.99,
-      stock: 3,
-      payments: ["PayPal", "Credit Card", "Crypto"],
-      arrivalTime: "Instant delivery upon payment"
-    },
-    {
-      title: "Roblox Dev Account",
-      description: "Account with gamepass sales, Limited U items, and verified badge.",
+      title: "Korblox",
+      description: "A Roblox account with the rare limited Korblox",
       image: "https://tr.rbxcdn.com/f1f683ae9ac9988ef9c37b70e0a946dc/420/420/Hat/Png",
       category: "roblox",
-      price: 69.99,
+      price: 100,
       stock: 1,
-      payments: ["PayPal", "Credit Card"],
+      payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
     {
-      title: "Fortnite Pro",
-      description: "Includes Season 2 skin, 300+ wins, and exclusive emotes.",
-      image: "https://cdn2.unrealengine.com/fortnite-social-image-1920x1080-01a65f2d4262.jpg",
-      category: "fortnite",
-      price: 89.99,
-      stock: 0,
-      payments: ["PayPal", "Credit Card", "Crypto"],
-      arrivalTime: "Instant delivery upon payment"
-    },
-    {
-      title: "Fortnite Rare Bundle",
-      description: "Galaxy skin, 200+ wins, and full locker.",
-      image: "https://cdn2.unrealengine.com/Fortnite%2FChapter3Season4%2FBattlePass%2FC3S4_BattlePass_Epic_1920x1080-1920x1080-e4ec267cd613.jpg",
-      category: "fortnite",
-      price: 99.99,
-      stock: 2,
-      payments: ["PayPal", "Credit Card"],
-      arrivalTime: "Within 10 minutes after purchase"
-    },
-    {
-      title: "GTA Online Maxed",
-      description: "Level 200+, $100M cash, all vehicles unlocked.",
+      title: "1k Robux",
+      description: "Get 1k Robux, $10 a Unit",
       image: "https://images.unsplash.com/photo-1625064122145-4ce5c06e9f4e?fit=crop&w=800&q=60",
-      category: "other",
-      price: 59.99,
-      stock: 5,
-      payments: ["PayPal", "Credit Card", "Crypto"],
-      arrivalTime: "Instant delivery upon payment"
-    },
-    {
-      title: "Steam Stash",
-      description: "50+ games including AAA titles, VAC clean.",
-      image: "https://cdn.cloudflare.steamstatic.com/store/home/store_home_share.jpg",
-      category: "other",
-      price: 79.99,
-      stock: 10,
-      payments: ["PayPal", "Credit Card"],
+      category: "products",
+      price: 10,
+      stock: 500,
+      payments: ["PayPal", "Cashapp"],
       arrivalTime: "Within 10 minutes after purchase"
     },
     {
-      title: "Fortnite Ninja Bundle",
-      description: "Icon Series bundle, full locker, 500+ wins.",
+      title: "Wildcat Fortnite",
+      description: "Get the Nintendo Switch Bundle Wildcat",
       image: "https://cdn2.unrealengine.com/fortnite-ninja-bundle-image.jpg",
       category: "fortnite",
       price: 119.99,
